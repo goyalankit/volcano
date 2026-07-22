@@ -258,6 +258,25 @@ func checkGPUtype(annos map[string]string, cardtype string) bool {
 	return true
 }
 
+func checkGPUUUID(annos map[string]string, id string) bool {
+	match := func(list string) bool {
+		for _, uuid := range strings.Split(list, ",") {
+			if strings.TrimSpace(uuid) == id {
+				return true
+			}
+		}
+		return false
+	}
+
+	if useUUID, ok := annos[VGPUUseUUIDAnnotation]; ok && strings.TrimSpace(useUUID) != "" && !match(useUUID) {
+		return false
+	}
+	if noUseUUID, ok := annos[VGPUNoUseUUIDAnnotation]; ok && strings.TrimSpace(noUseUUID) != "" && match(noUseUUID) {
+		return false
+	}
+	return true
+}
+
 func checkType(annos map[string]string, d GPUDevice, n devices.ContainerDeviceRequest) bool {
 	//General type check, NVIDIA->NVIDIA MLU->MLU
 	if !strings.Contains(d.Type, n.Type) {
@@ -408,6 +427,9 @@ func checkNodeGPUSharingPredicateAndScore(pod *v1.Pod, gssnap *GPUDevices, repli
 		for _, i := range sortedDeviceIndicesByPolicy(gs, schedulePolicy) {
 			klog.V(3).InfoS("Scoring pod request", "memReq", val.Memreq, "memPercentageReq", val.MemPercentagereq, "coresReq", val.Coresreq, "Nums", val.Nums, "Index", i, "ID", gs.Device[i].ID)
 			klog.V(3).InfoS("Current Device", "Index", i, "TotalMemory", gs.Device[i].Memory, "UsedMemory", gs.Device[i].UsedMem, "UsedCores", gs.Device[i].UsedCore, "UsedNum", gs.Device[i].UsedNum, "Number", gs.Device[i].Number, "replicate", replicate)
+			if !checkGPUUUID(pod.Annotations, gs.Device[i].UUID) {
+				continue
+			}
 			if gs.Device[i].Number <= uint(gs.Device[i].UsedNum) {
 				continue
 			}

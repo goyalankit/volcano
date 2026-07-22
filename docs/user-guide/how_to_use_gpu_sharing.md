@@ -4,6 +4,26 @@
 
 > **Note**  GPU sharing is deprecated in volcano v1.9, recommended to use the Volcano VGPU feature, which is provided by HAMI project, click [here](https://github.com/Project-HAMi/volcano-vgpu-device-plugin)
 
+### Selecting vGPU devices by UUID
+
+The Volcano vGPU scheduler supports UUID constraints. Use `volcano.sh/vgpu-use-gpuuuid` as a comma-separated allowlist:
+
+```yaml
+metadata:
+  annotations:
+    volcano.sh/vgpu-use-gpuuuid: "GPU-03f69c50-207a-2038-9b45-23cac89cb67d"
+```
+
+Use `volcano.sh/vgpu-nouse-gpuuuid` to exclude devices:
+
+```yaml
+metadata:
+  annotations:
+    volcano.sh/vgpu-nouse-gpuuuid: "GPU-03f69c50-207a-2038-9b45-23cac89cb67d"
+```
+
+UUIDs are matched exactly after trimming whitespace. If no allowed device can satisfy the request, the pod remains unschedulable. When the same UUID appears in both annotations, the denylist takes precedence.
+
 ## Environment setup
 
 ### Install volcano
